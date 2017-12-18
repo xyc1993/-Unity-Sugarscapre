@@ -9,10 +9,10 @@ namespace CellAgent
     public class AgentCell : Cell
     {
         private int life; //current state of sugar, if 0 then agent dies, for simplicity life does not regenerate; sorry ants, plan your life better!
-        private int capacity; //how much sugar an agent can have
-        private int backpack;
+        private int capacity; //how much sugar an agent can have in total
+        private int backpack; //how much sugar an agent have at current timestep
         private int grab; //how much sugar an agent grabs per turn
-        private int metabolism; //how much sugar an agent burns per turn
+        private int metabolism; //how much sugar an agent eats per turn
         private int range; //range of vision and motion
         public bool dead;
 
@@ -34,11 +34,9 @@ namespace CellAgent
 
             cellObject = _cellObject;
             cellPosition = new Vector3(0.0f, 0.0f, 0.0f);
-            cellColor = _cellColor;
+            SetColor(_cellColor);
             dead = false;
             backpack = 0;
-
-            cellObject.GetComponent<SpriteRenderer>().color = cellColor;
         }
 
         //only used for initialising agents on the grid
@@ -49,6 +47,17 @@ namespace CellAgent
 
             cellObject.transform.position = grid[x][y].GetCellPosition();
             grid[x][y].isTaken = true;
+        }
+
+        public void MoveAgentOnGrid(ref List<List<ResourceCell>> grid, int _x, int _y)
+        {
+            grid[x][y].isTaken = false;
+
+            x = _x;
+            y = _y;
+
+            grid[x][y].isTaken = true;
+            cellObject.transform.position = grid[x][y].GetCellPosition();
         }
 
         public struct NeighbouringCellData
@@ -65,7 +74,7 @@ namespace CellAgent
             }
         };
 
-        private void MoveAgent(ref List<List<ResourceCell>> grid, int width, int height)
+        private void MoveAgentToResources(ref List<List<ResourceCell>> grid, int width, int height)
         {
             //look around and gather data about environment
             int vision = 1;
@@ -133,18 +142,12 @@ namespace CellAgent
                     nearestEnvironment.RemoveAt(i);
                 }
             }
-
+                        
             System.Random rnd = new System.Random();
             maxIndex = rnd.Next(nearestEnvironment.Count);
 
             //move agent to a new cell on the grid
-            grid[x][y].isTaken = false;
-            
-            x = nearestEnvironment[maxIndex]._x;
-            y = nearestEnvironment[maxIndex]._y;
-
-            grid[x][y].isTaken = true;
-            cellObject.transform.position = grid[x][y].GetCellPosition();
+            MoveAgentOnGrid(ref grid, nearestEnvironment[maxIndex]._x, nearestEnvironment[maxIndex]._y);
         }
 
         public void UpdateAgent(ref List<List<ResourceCell>> grid, int width, int height)
@@ -196,7 +199,7 @@ namespace CellAgent
                 }
 
                 //agent's movement
-                MoveAgent(ref grid, width, height);
+                MoveAgentToResources(ref grid, width, height);
             }            
         }
     }

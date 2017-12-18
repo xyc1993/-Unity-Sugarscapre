@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using CellResource;
 using CellAgent;
 
@@ -10,33 +9,20 @@ namespace GridControl
 {
     public class GridController : MonoBehaviour
     {
-
         public GameObject cellPrefab;
-        private ResourceCell gridCell;
-
-        public Toggle regrowToggle;
 
         private List<List<ResourceCell>> grid = new List<List<ResourceCell>>();
         private List<AgentCell> defenders = new List<AgentCell>();
 
-        public static int width, height;
-        private int agentsNumber;
+        public static int width = 100;
+        public static int height = 100;
+        public static bool regrowResources = true;
+        public static bool isPaused = true;
 
-        //for the default size of the cell, good square is 28x28, grid loaction
-        //28*0.303 = 8,484
-        private const float delta = 0.303f;
-        //default square positioned at (-6.5, -4, 0)
+        //for the default size of the cell prefab, good square is 28x28, grid loaction at (-6.5, -4, 0) and distance between cells 0.303
+        private const float delta = 0.303f;        
         private const int defaultWidth = 28, defaultHeight = 28;
-        private float scale;
-
-        private const int maxSugar = 20;
-        public bool regrowResources;
-        public bool isPaused;
-
-        public void ToggleRegrowResources()
-        {
-            regrowResources = !regrowResources;
-        }
+        private float scale;            
 
         //scaling the grid and positioning it in the centre
         private void SetScalingAndPosition()
@@ -65,7 +51,7 @@ namespace GridControl
 
                     Vector3 cellPosition = new Vector3(transform.position.x + dx, transform.position.y + dy, transform.position.z);
 
-                    float startingResources = 0.1f + maxSugar * Mathf.Sin((float)i * Mathf.PI / (float)width) * Mathf.Cos((float)j * 0.5f * Mathf.PI / (float)width);
+                    float startingResources = 0.1f + ResourceCell.maxSugar * Mathf.Sin((float)i * Mathf.PI / (float)width) * Mathf.Cos((float)j * 0.5f * Mathf.PI / (float)width);
                     if (startingResources < 0.0f)
                     {
                         startingResources = 0.0f;
@@ -83,7 +69,7 @@ namespace GridControl
 
         private void InitializeAgents()
         {
-            agentsNumber = (int)(0.027f * (float)width * (float)height);
+            int agentsNumber = (int)(0.027f * (float)width * (float)height);
             for (int i = 0; i < agentsNumber; i++)
             {
                 Color defendersColor = new Color(1.0f, 1.0f, 0.0f);
@@ -153,16 +139,5 @@ namespace GridControl
                 UpdateAgents();
             }
         }
-
-        public void StartPauseSImulation()
-        {
-            isPaused = !isPaused;
-        }
-
-        public void QuitToMainMenu()
-        {
-            SceneManager.LoadScene("MainMenu");
-        }
     }
-
 }

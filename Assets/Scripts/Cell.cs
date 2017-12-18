@@ -16,6 +16,12 @@ namespace CellBase
             cellObject.GetComponent<SpriteRenderer>().color = cellColor;
         }
 
+        public void SetColor(Color _cellColor)
+        {
+            cellColor = _cellColor;
+            cellObject.GetComponent<SpriteRenderer>().color = cellColor;
+        }
+
         public Color GetColor()
         {
             return cellColor;

@@ -222,6 +222,7 @@
     <Compile Include="Assets\Scripts\AgentCell.cs" />
     <Compile Include="Assets\Scripts\Cell.cs" />
     <Compile Include="Assets\Scripts\GridController.cs" />
+    <Compile Include="Assets\Scripts\GridUI.cs" />
     <Compile Include="Assets\Scripts\MainMenu.cs" />
     <Compile Include="Assets\Scripts\ResourceCell.cs" />
   </ItemGroup>

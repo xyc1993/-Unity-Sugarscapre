@@ -9,9 +9,9 @@ namespace CellResource
     {
         private int sugar; //<0,20>
         private int maxCellSugar; //single cell potential
-        private const int maxSugar = 20; //possible upper limit for sugar
-        private int regrowthRate;
-        public bool isTaken;
+        public const int maxSugar = 20; //possible upper limit for sugar
+        private int regrowthRate; //how much resources grow back in a single timestep
+        public bool isTaken; //state of a grid - if it's occupied by an agent
                 
         public ResourceCell(int _sugar, int _maxCellSugar, int _regrowthRate, GameObject _cellObject, Vector3 _cellPosition)
         {            
@@ -23,16 +23,13 @@ namespace CellResource
             cellObject = _cellObject;
             cellPosition = _cellPosition;
 
-            cellColor = new Color(0.0f, (float)sugar/(float)maxSugar, 0.0f);
-            cellObject.GetComponent<SpriteRenderer>().color = cellColor;
+            SetColor(0.0f, (float)sugar / (float)maxSugar, 0.0f);
         }
 
         public void SetSugar(int _sugar)
         {
             sugar = _sugar;
-
-            cellColor = new Color(0.0f, (float)sugar / (float)maxSugar, 0.0f);
-            cellObject.GetComponent<SpriteRenderer>().color = cellColor;
+            SetColor(0.0f, (float)sugar / (float)maxSugar, 0.0f);
         }
 
         public int GetSugar()

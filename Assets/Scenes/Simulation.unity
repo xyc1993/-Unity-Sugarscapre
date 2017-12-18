@@ -350,7 +350,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1734425305}
+      - m_Target: {fileID: 2075101346}
         m_MethodName: QuitToMainMenu
         m_Mode: 1
         m_Arguments:
@@ -979,7 +979,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1734425305}
+      - m_Target: {fileID: 2075101346}
         m_MethodName: ToggleRegrowResources
         m_Mode: 1
         m_Arguments:
@@ -1095,11 +1095,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cellPrefab: {fileID: 1917648484781622, guid: 3c61ffeb9bcc2ef4fbc86bffbdae0113, type: 2}
-  regrowToggle: {fileID: 1469887664}
-  width: 150
-  height: 150
-  regrowResources: 1
-  isPaused: 1
 --- !u!4 &1734425306
 Transform:
   m_ObjectHideFlags: 0
@@ -1189,7 +1184,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1734425305}
+      - m_Target: {fileID: 2075101346}
         m_MethodName: StartPauseSImulation
         m_Mode: 1
         m_Arguments:
@@ -1245,8 +1240,9 @@ GameObject:
   - component: {fileID: 2075101343}
   - component: {fileID: 2075101345}
   - component: {fileID: 2075101344}
+  - component: {fileID: 2075101346}
   m_Layer: 0
-  m_Name: Image
+  m_Name: GridUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1304,3 +1300,14 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2075101342}
+--- !u!114 &2075101346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2075101342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83942c3670f7082448cc243a41ee17d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
