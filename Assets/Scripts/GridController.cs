@@ -12,7 +12,8 @@ namespace GridControl
         public GameObject cellPrefab;
 
         private List<List<ResourceCell>> grid = new List<List<ResourceCell>>();
-        private List<AgentCell> defenders = new List<AgentCell>();
+        private List<AgentCell> basicAgents = new List<AgentCell>();
+        private List<AgentCell> attackerAgents = new List<AgentCell>();
 
         public static int width = 100;
         public static int height = 100;
@@ -67,14 +68,12 @@ namespace GridControl
             }
         }
 
-        private void InitializeAgents()
+        private void InitializeAgents(ref List<AgentCell> agentsTribe, AgentCell.Tribe tribe)
         {
-            int agentsNumber = (int)(0.027f * (float)width * (float)height);
+            int agentsNumber = (int)(0.02f * (float)width * (float)height);
             for (int i = 0; i < agentsNumber; i++)
             {
-                Color defendersColor = new Color(1.0f, 1.0f, 0.0f);
-
-                AgentCell singleAgent = new AgentCell(5, 10, 4, 2, 4, Instantiate(cellPrefab, Vector3.zero, transform.rotation), defendersColor);
+                AgentCell singleAgent = new AgentCell(5, 10, 4, 2, 4, Instantiate(cellPrefab, Vector3.zero, transform.rotation), tribe);
                 singleAgent.cellObject.transform.localScale = new Vector3(scale, scale, 1.0f);
 
                 System.Random rnd = new System.Random();
@@ -83,11 +82,11 @@ namespace GridControl
                 {
                     x = rnd.Next(width);
                     y = rnd.Next(height);
-                } while (grid[x][y].isTaken);
+                } while (grid[x][y].isTakenBasic || grid[x][y].isTakenAttacker);
 
                 singleAgent.SetAgentOnGrid(ref grid, x, y);
 
-                defenders.Add(singleAgent);
+                agentsTribe.Add(singleAgent);
             }
         }
 
@@ -102,19 +101,19 @@ namespace GridControl
             }
         }
 
-        private void UpdateAgents()
+        private void UpdateAgents(ref List<AgentCell> basicAgentList, ref List<AgentCell> agentsTribe)
         {
-            for (int i = 0; i < defenders.Count; i++)
+            for (int i = 0; i < agentsTribe.Count; i++)
             {
-                defenders[i].UpdateAgent(ref grid, width, height);
+                agentsTribe[i].UpdateAgent(ref basicAgentList, ref grid, width, height);
             }
 
-            for (int i = 0; i < defenders.Count; i++)
+            for (int i = agentsTribe.Count-1; i >= 0; i--)
             {
-                if (defenders[i].dead)
+                if (agentsTribe[i].dead)
                 {
-                    Destroy(defenders[i].cellObject);
-                    defenders.RemoveAt(i);
+                    Destroy(agentsTribe[i].cellObject);
+                    agentsTribe.RemoveAt(i);
                 }
             }
         }
@@ -124,7 +123,8 @@ namespace GridControl
         {
             SetScalingAndPosition();
             CreateGrid();
-            InitializeAgents();
+            InitializeAgents(ref basicAgents, AgentCell.Tribe.basic);
+            InitializeAgents(ref attackerAgents, AgentCell.Tribe.attacker);
         }
 
         // Update is called once per frame
@@ -136,7 +136,8 @@ namespace GridControl
                 {
                     RegrowGridResources();
                 }
-                UpdateAgents();
+                UpdateAgents(ref basicAgents, ref basicAgents);
+                UpdateAgents(ref basicAgents, ref attackerAgents);
             }
         }
     }

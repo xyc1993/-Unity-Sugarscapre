@@ -11,14 +11,16 @@ namespace CellResource
         private int maxCellSugar; //single cell potential
         public const int maxSugar = 20; //possible upper limit for sugar
         private int regrowthRate; //how much resources grow back in a single timestep
-        public bool isTaken; //state of a grid - if it's occupied by an agent
-                
+        public bool isTakenBasic; //state of a grid - if it's occupied by a basic agent
+        public bool isTakenAttacker;  //state of a grid - if it's occupied by a attacker agent
+
         public ResourceCell(int _sugar, int _maxCellSugar, int _regrowthRate, GameObject _cellObject, Vector3 _cellPosition)
         {            
             sugar = _sugar;
             maxCellSugar = _maxCellSugar;
             regrowthRate = _regrowthRate;
-            isTaken = false;
+            isTakenBasic = false;
+            isTakenAttacker = false;
 
             cellObject = _cellObject;
             cellPosition = _cellPosition;
