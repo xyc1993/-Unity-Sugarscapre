@@ -51,14 +51,14 @@ namespace GridControl
                     float dy = j * scale * delta;
 
                     Vector3 cellPosition = new Vector3(transform.position.x + dx, transform.position.y + dy, transform.position.z);
+                    
+                    float startingSugar = 0.1f + ResourceCell.maxResource * Mathf.Sin((float)i * Mathf.PI / (float)width) * Mathf.Cos((float)j * 0.5f * Mathf.PI / (float)width);
+                    startingSugar = (startingSugar > 0.0f) ? startingSugar : 0.0f;
 
-                    float startingResources = 0.1f + ResourceCell.maxSugar * Mathf.Sin((float)i * Mathf.PI / (float)width) * Mathf.Cos((float)j * 0.5f * Mathf.PI / (float)width);
-                    if (startingResources < 0.0f)
-                    {
-                        startingResources = 0.0f;
-                    }
+                    float startingSpice = 0.1f + ResourceCell.maxResource * Mathf.Sin((float)i * Mathf.PI / (float)width) * Mathf.Sin((float)j * 0.5f * Mathf.PI / (float)width);
+                    startingSpice = (startingSpice > 0.0f) ? startingSpice : 0.0f;
 
-                    ResourceCell singleCell = new ResourceCell((int)startingResources, (int)startingResources, 1, Instantiate(cellPrefab, cellPosition, transform.rotation), cellPosition);
+                    ResourceCell singleCell = new ResourceCell((int)startingSugar, (int)startingSugar, (int)startingSpice, (int)startingSpice, 1, Instantiate(cellPrefab, cellPosition, transform.rotation), cellPosition);
 
                     singleCell.cellObject.transform.localScale = new Vector3(scale, scale, 1.0f);
 
@@ -68,9 +68,9 @@ namespace GridControl
             }
         }
 
-        private void InitializeAgents(ref List<AgentCell> agentsTribe, AgentCell.Tribe tribe)
+        private void InitializeAgents(ref List<AgentCell> agentsTribe, AgentCell.Tribe tribe, float agentDensity)
         {
-            int agentsNumber = (int)(0.02f * (float)width * (float)height);
+            int agentsNumber = (int)(agentDensity * (float)width * (float)height);
             for (int i = 0; i < agentsNumber; i++)
             {
                 AgentCell singleAgent = new AgentCell(5, 10, 4, 2, 4, Instantiate(cellPrefab, Vector3.zero, transform.rotation), tribe);
@@ -123,8 +123,8 @@ namespace GridControl
         {
             SetScalingAndPosition();
             CreateGrid();
-            InitializeAgents(ref basicAgents, AgentCell.Tribe.basic);
-            InitializeAgents(ref attackerAgents, AgentCell.Tribe.attacker);
+            InitializeAgents(ref basicAgents, AgentCell.Tribe.basic, 0.02f);
+            InitializeAgents(ref attackerAgents, AgentCell.Tribe.attacker, 0.012f);
         }
 
         // Update is called once per frame

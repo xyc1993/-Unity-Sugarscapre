@@ -14,11 +14,13 @@ namespace CellAgent
             attacker
         };
 
-        private int life; //current state of sugar, if 0 then agent dies, for simplicity life does not regenerate; sorry ants, plan your life better!
-        private int capacity; //how much sugar an agent can have in total
-        private int backpack; //how much sugar an agent have at current timestep
-        private int grab; //how much sugar an agent grabs per turn
-        private int metabolism; //how much sugar an agent eats per turn
+        private int lifeSugar; //current state of sugar, if 0 then agent dies, for simplicity life does not regenerate; sorry ants, plan your life better!
+        private int lifeSpice; //you need both resources (all nutrients) to live!
+        private int capacity; //how much resources in a backpack an agent can have in total
+        private int sugarBackpack; //how much sugar an agent have at current timestep
+        private int spiceBackpack; //how much spice an agent have at current timestep
+        private int grab; //how much resources an agent grabs per turn (he can grab only one type of resource per turn)
+        private int metabolism; //how much resources an agent eats per turn
         private int range; //range of vision and motion
         public bool dead;
 
@@ -26,7 +28,8 @@ namespace CellAgent
         private string coordinates;
 
         private Tribe agentTribe;
-        private int attack; //implementation in progress
+        private int attack;
+        private int HP; //health points
 
         /*TO DO    
         private uint tradeRate;
@@ -34,7 +37,8 @@ namespace CellAgent
 
         public AgentCell(int _life, int _capacity, int _grab, int _metabolism, int _range, GameObject _cellObject, Tribe _agentTribe)
         {
-            life = _life;
+            lifeSugar = _life;
+            lifeSpice = _life;
             capacity = _capacity;
             grab = _grab;
             metabolism = _metabolism;
@@ -43,7 +47,8 @@ namespace CellAgent
             cellObject = _cellObject;
             cellPosition = new Vector3(0.0f, 0.0f, 0.0f);                        
             dead = false;
-            backpack = 0;
+            sugarBackpack = 0;
+            spiceBackpack = 0;
 
             agentTribe = _agentTribe;
             switch(agentTribe)
@@ -51,10 +56,12 @@ namespace CellAgent
                 case Tribe.basic:
                     SetColor(1.0f, 1.0f, 0.0f);
                     attack = 2;
+                    HP = 8;
                     break;
                 case Tribe.attacker:
                     SetColor(1.0f, 0.0f, 0.0f);
                     attack = 3;
+                    HP = 6;
                     break;
                 default:
                     SetColor(0.0f, 0.0f, 0.0f);
@@ -175,14 +182,14 @@ namespace CellAgent
             return nearestEnvironment;
         }
 
-        private void MoveAgentToResources(ref List<List<ResourceCell>> grid, int width, int height)
+        void GoToMaxSugar(ref List<List<ResourceCell>> grid, int width, int height)
         {
             List<NeighbouringCellData> nearestEnvironment = getDataAboutEnvironment(ref grid, width, height);
 
             //remove taken cells
-            for (int i = nearestEnvironment.Count-1; i >= 0; i--)
+            for (int i = nearestEnvironment.Count - 1; i >= 0; i--)
             {
-                if(nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker)
+                if (nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker)
                 {
                     nearestEnvironment.RemoveAt(i);
                 }
@@ -192,7 +199,7 @@ namespace CellAgent
             int max = 0;
             for (int i = 0; i < nearestEnvironment.Count; i++)
             {
-                if(max < nearestEnvironment[i].gridCell.GetSugar())
+                if (max < nearestEnvironment[i].gridCell.GetSugar())
                 {
                     max = nearestEnvironment[i].gridCell.GetSugar();
                 }
@@ -205,12 +212,84 @@ namespace CellAgent
                     nearestEnvironment.RemoveAt(i);
                 }
             }
-                        
+
             System.Random rnd = new System.Random();
             int maxIndex = rnd.Next(nearestEnvironment.Count);
 
             //move agent to a new cell on the grid
             MoveAgentOnGrid(ref grid, nearestEnvironment[maxIndex]._x, nearestEnvironment[maxIndex]._y);
+        }
+
+        void GoToMaxSpice(ref List<List<ResourceCell>> grid, int width, int height)
+        {
+            List<NeighbouringCellData> nearestEnvironment = getDataAboutEnvironment(ref grid, width, height);
+
+            //remove taken cells
+            for (int i = nearestEnvironment.Count - 1; i >= 0; i--)
+            {
+                if (nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker)
+                {
+                    nearestEnvironment.RemoveAt(i);
+                }
+            }
+
+            //find max spice cell
+            int max = 0;
+            for (int i = 0; i < nearestEnvironment.Count; i++)
+            {
+                if (max < nearestEnvironment[i].gridCell.GetSpice())
+                {
+                    max = nearestEnvironment[i].gridCell.GetSpice();
+                }
+            }
+
+            for (int i = nearestEnvironment.Count - 1; i >= 0; i--)
+            {
+                if (nearestEnvironment[i].gridCell.GetSpice() != max)
+                {
+                    nearestEnvironment.RemoveAt(i);
+                }
+            }
+
+            System.Random rnd = new System.Random();
+            int maxIndex = rnd.Next(nearestEnvironment.Count);
+
+            //move agent to a new cell on the grid
+            MoveAgentOnGrid(ref grid, nearestEnvironment[maxIndex]._x, nearestEnvironment[maxIndex]._y);
+        }
+
+        private void MoveAgentToResources(ref List<List<ResourceCell>> grid, int width, int height)
+        {
+            if (sugarBackpack > 0 && spiceBackpack > 0)
+            {
+                if (sugarBackpack < spiceBackpack)
+                {
+                    GoToMaxSugar(ref grid, width, height);
+                }
+                else
+                {
+                    GoToMaxSpice(ref grid, width, height);
+                }
+            }
+            else if (sugarBackpack <= 0 && spiceBackpack > 0)
+            {
+                GoToMaxSugar(ref grid, width, height);
+            }
+            else if (sugarBackpack > 0 && spiceBackpack <= 0)
+            {
+                GoToMaxSpice(ref grid, width, height);
+            }
+            else
+            {
+                if (lifeSugar < lifeSpice)
+                {
+                    GoToMaxSugar(ref grid, width, height);
+                }
+                else
+                {
+                    GoToMaxSpice(ref grid, width, height);
+                }
+            }
         }
 
         private bool PerformAttack(ref List<AgentCell> targetList, ref List<List<ResourceCell>> grid, int width, int height)
@@ -229,8 +308,6 @@ namespace CellAgent
                 }
             }
 
-            //Debug.Log("Przed: "+tmp+", Po:"+ nearestEnvironment.Count);
-
             //randomly select target, if there's at least one
             if (nearestEnvironment.Count > 0)
             {
@@ -239,24 +316,32 @@ namespace CellAgent
                 string targetCoordintates = "" + nearestEnvironment[target]._x + " " + nearestEnvironment[target]._y;
 
                 int targetIndex = targetList.FindIndex(a => a.coordinates == targetCoordintates);
-                //Debug.Log("index: "+targetIndex+" zakres: "+ targetList.Count);
 
                 if(targetIndex == -1) //other attacker was first
                 {
                     attackSucceeded = false;
                 } else
                 {
-                    if (attack > targetList[targetIndex].life)
+                    if (attack > targetList[targetIndex].HP)
                     {
-                        targetList[targetIndex].life -= attack;
+                        targetList[targetIndex].HP -= attack;
 
-                        if (capacity > (backpack + targetList[targetIndex].backpack))
+                        if (capacity > (sugarBackpack + targetList[targetIndex].sugarBackpack))
                         {
-                            backpack += targetList[targetIndex].backpack;
+                            sugarBackpack += targetList[targetIndex].sugarBackpack;
                         }
                         else
                         {
-                            backpack = capacity;
+                            sugarBackpack = capacity;
+                        }
+
+                        if (capacity > (spiceBackpack + targetList[targetIndex].spiceBackpack))
+                        {
+                            spiceBackpack += targetList[targetIndex].spiceBackpack;
+                        }
+                        else
+                        {
+                            spiceBackpack = capacity;
                         }
 
                         MoveAgentOnGrid(ref grid, targetList[targetIndex].x, targetList[targetIndex].y);
@@ -264,8 +349,8 @@ namespace CellAgent
                     }
                     else
                     {
-                        life -= targetList[targetIndex].attack;
-                        targetList[targetIndex].life -= attack;
+                        HP -= targetList[targetIndex].attack;
+                        targetList[targetIndex].HP -= attack;
 
                         attackSucceeded = false;
                     }
@@ -275,53 +360,139 @@ namespace CellAgent
             return attackSucceeded;
         }
 
+        //eating gathered resources
+        private void Eat()
+        {
+            if (sugarBackpack > 0)
+            {
+                sugarBackpack -= metabolism;
+            }
+            else
+            {
+                //if metabolism is higher than 1, backpack could be below zero so we add those negative points to life
+                lifeSugar -= sugarBackpack;
+                lifeSugar -= metabolism;
+                sugarBackpack = 0;
+            }
+
+            if (spiceBackpack > 0)
+            {
+                spiceBackpack -= metabolism;
+            }
+            else
+            {
+                lifeSpice -= spiceBackpack;
+                lifeSpice -= metabolism;
+                spiceBackpack = 0;
+            }
+        }
+
+        private void GatherSugar(ref List<List<ResourceCell>> grid)
+        {
+            int currentCellSugar = grid[x][y].GetSugar();
+            if (currentCellSugar > grab)
+            {
+                if (capacity > (sugarBackpack + grab))
+                {
+                    grid[x][y].SetSugar(currentCellSugar - grab);
+                    sugarBackpack += grab;
+                }
+                else
+                {
+                    grid[x][y].SetSugar(currentCellSugar - (capacity - sugarBackpack));
+                    sugarBackpack = capacity;
+                }
+
+            }
+            else
+            {
+                int tmpGrab = currentCellSugar;
+                if (capacity > (sugarBackpack + tmpGrab))
+                {
+                    grid[x][y].SetSugar(currentCellSugar - tmpGrab);
+                    sugarBackpack += tmpGrab;
+                }
+                else
+                {
+                    grid[x][y].SetSugar(currentCellSugar - (capacity - sugarBackpack));
+                    sugarBackpack = capacity;
+                }
+            }
+        }
+
+        private void GatherSpice(ref List<List<ResourceCell>> grid)
+        {
+            int currentCellSpice = grid[x][y].GetSpice();
+            if (currentCellSpice > grab)
+            {
+                if (capacity > (spiceBackpack + grab))
+                {
+                    grid[x][y].SetSpice(currentCellSpice - grab);
+                    spiceBackpack += grab;
+                }
+                else
+                {
+                    grid[x][y].SetSpice(currentCellSpice - (capacity - spiceBackpack));
+                    spiceBackpack = capacity;
+                }
+
+            }
+            else
+            {
+                int tmpGrab = currentCellSpice;
+                if (capacity > (spiceBackpack + tmpGrab))
+                {
+                    grid[x][y].SetSpice(currentCellSpice - tmpGrab);
+                    spiceBackpack += tmpGrab;
+                }
+                else
+                {
+                    grid[x][y].SetSpice(currentCellSpice - (capacity - spiceBackpack));
+                    spiceBackpack = capacity;
+                }
+            }
+        }
+
+        //getting new resources from ground
+        private void GatherResources(ref List<List<ResourceCell>> grid)
+        {
+            if (sugarBackpack > 0 && spiceBackpack > 0)
+            {
+                if(sugarBackpack < spiceBackpack)
+                {
+                    GatherSugar(ref grid);
+                } else
+                {
+                    GatherSpice(ref grid);
+                }
+            } else if (sugarBackpack <= 0 && spiceBackpack > 0)
+            {
+                GatherSugar(ref grid);
+            } else if (sugarBackpack > 0 && spiceBackpack <= 0)
+            {
+                GatherSpice(ref grid);
+            } else
+            {
+                if(lifeSugar < lifeSpice)
+                {
+                    GatherSugar(ref grid);
+                } else
+                {
+                    GatherSpice(ref grid);
+                }
+            }
+        }
+
         public void UpdateAgent(ref List<AgentCell> basicAgentList, ref List<List<ResourceCell>> grid, int width, int height)
         {
             //checking for agent's pulse
-            if (life < 0)
+            if (lifeSugar < 0 || HP < 0)
             {
                 dead = true;
             } else
-            {
-                //eating
-                if(backpack > 0)
-                {
-                    backpack -= metabolism;
-                } else
-                {
-                    life -= backpack;
-                    life -= metabolism;
-                    backpack = 0;
-                }
-
-                //getting new sugar from ground
-                int currentCellSugar = grid[x][y].GetSugar();
-                if (currentCellSugar > grab)
-                {
-                    if(capacity > (backpack + grab))
-                    {
-                        grid[x][y].SetSugar(currentCellSugar - grab);
-                        backpack += grab;
-                    } else
-                    {
-                        grid[x][y].SetSugar(currentCellSugar - (capacity - backpack));
-                        backpack = capacity;
-                    }
-                    
-                } else
-                {
-                    int tmpGrab = currentCellSugar;
-                    if (capacity > (backpack + tmpGrab))
-                    {
-                        grid[x][y].SetSugar(currentCellSugar - tmpGrab);
-                        backpack += tmpGrab;
-                    }
-                    else
-                    {
-                        grid[x][y].SetSugar(currentCellSugar - (capacity - backpack));
-                        backpack = capacity;
-                    }
-                }
+            {                
+                Eat();
+                GatherResources(ref grid);
 
                 //agent's movement/interaction                
                 switch (agentTribe)
