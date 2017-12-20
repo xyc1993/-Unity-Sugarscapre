@@ -14,6 +14,7 @@ namespace GridControl
         private List<List<ResourceCell>> grid = new List<List<ResourceCell>>();
         private List<AgentCell> basicAgents = new List<AgentCell>();
         private List<AgentCell> attackerAgents = new List<AgentCell>();
+        private List<AgentCell> traderAgents = new List<AgentCell>();
 
         public static int width = 100;
         public static int height = 100;
@@ -82,7 +83,7 @@ namespace GridControl
                 {
                     x = rnd.Next(width);
                     y = rnd.Next(height);
-                } while (grid[x][y].isTakenBasic || grid[x][y].isTakenAttacker);
+                } while (grid[x][y].isTakenBasic || grid[x][y].isTakenAttacker || grid[x][y].isTakenTrader);
 
                 singleAgent.SetAgentOnGrid(ref grid, x, y);
 
@@ -101,11 +102,12 @@ namespace GridControl
             }
         }
 
-        private void UpdateAgents(ref List<AgentCell> basicAgentList, ref List<AgentCell> agentsTribe)
+        //basicAgentList is for possible interaction for more advanced tribes
+        private void UpdateAgents(ref List<AgentCell> basicAgentList, ref List<AgentCell> tradersAgentList, ref List<AgentCell> agentsTribe)
         {
             for (int i = 0; i < agentsTribe.Count; i++)
             {
-                agentsTribe[i].UpdateAgent(ref basicAgentList, ref grid, width, height);
+                agentsTribe[i].UpdateAgent(ref basicAgentList, ref tradersAgentList, ref grid, width, height);
             }
 
             for (int i = agentsTribe.Count-1; i >= 0; i--)
@@ -124,7 +126,8 @@ namespace GridControl
             SetScalingAndPosition();
             CreateGrid();
             InitializeAgents(ref basicAgents, AgentCell.Tribe.basic, 0.02f);
-            InitializeAgents(ref attackerAgents, AgentCell.Tribe.attacker, 0.012f);
+            InitializeAgents(ref attackerAgents, AgentCell.Tribe.attacker, 0.01f);
+            InitializeAgents(ref traderAgents, AgentCell.Tribe.trader, 0.01f);
         }
 
         // Update is called once per frame
@@ -136,8 +139,9 @@ namespace GridControl
                 {
                     RegrowGridResources();
                 }
-                UpdateAgents(ref basicAgents, ref basicAgents);
-                UpdateAgents(ref basicAgents, ref attackerAgents);
+                UpdateAgents(ref basicAgents, ref traderAgents, ref basicAgents);
+                UpdateAgents(ref basicAgents, ref traderAgents, ref attackerAgents);
+                UpdateAgents(ref basicAgents, ref traderAgents, ref traderAgents);
             }
         }
     }

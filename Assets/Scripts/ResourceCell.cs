@@ -14,7 +14,8 @@ namespace CellResource
         public const int maxResource = 20; //possible upper limit for any resource
         private int regrowthRate; //how much resources grow back in a single timestep
         public bool isTakenBasic; //state of a grid - if it's occupied by a basic agent
-        public bool isTakenAttacker;  //state of a grid - if it's occupied by a attacker agent
+        public bool isTakenAttacker;  //state of a grid - if it's occupied by an attacker agent
+        public bool isTakenTrader;  //state of a grid - if it's occupied by a trader agent
 
         public ResourceCell(int _sugar, int _maxCellSugar, int _spice, int _maxCellSpice, int _regrowthRate, GameObject _cellObject, Vector3 _cellPosition)
         {            
@@ -26,6 +27,7 @@ namespace CellResource
             regrowthRate = _regrowthRate;
             isTakenBasic = false;
             isTakenAttacker = false;
+            isTakenTrader = false;
 
             cellObject = _cellObject;
             cellPosition = _cellPosition;

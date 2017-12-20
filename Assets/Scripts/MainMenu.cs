@@ -7,7 +7,6 @@ using GridControl;
 
 public class MainMenu : MonoBehaviour
 {
-    public string simulation;
     public Text helpText;
     public InputField gridWidth, gridHeight;
 
@@ -42,7 +41,7 @@ public class MainMenu : MonoBehaviour
         //setting height
         SetInputFieldValue(gridHeight, ref GridController.height);
 
-        SceneManager.LoadScene(simulation);
+        SceneManager.LoadScene("Simulation");
     }
 
     public void ShowHideHelp()

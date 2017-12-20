@@ -11,7 +11,8 @@ namespace CellAgent
         public enum Tribe
         {
             basic,
-            attacker
+            attacker,
+            trader
         };
 
         private int lifeSugar; //current state of sugar, if 0 then agent dies, for simplicity life does not regenerate; sorry ants, plan your life better!
@@ -63,6 +64,11 @@ namespace CellAgent
                     attack = 3;
                     HP = 6;
                     break;
+                case Tribe.trader:
+                    SetColor(1.0f, 0.0f, 1.0f);
+                    attack = 1;
+                    HP = 5;
+                    break;
                 default:
                     SetColor(0.0f, 0.0f, 0.0f);
                     break;
@@ -79,6 +85,9 @@ namespace CellAgent
                 case Tribe.attacker:
                     grid[x][y].isTakenAttacker = true;
                     break;
+                case Tribe.trader:
+                    grid[x][y].isTakenTrader = true;
+                    break;
                 default:
                     break;
             }
@@ -93,6 +102,9 @@ namespace CellAgent
                     break;
                 case Tribe.attacker:
                     grid[x][y].isTakenAttacker = false;
+                    break;
+                case Tribe.trader:
+                    grid[x][y].isTakenTrader = false;
                     break;
                 default:
                     break;
@@ -189,7 +201,7 @@ namespace CellAgent
             //remove taken cells
             for (int i = nearestEnvironment.Count - 1; i >= 0; i--)
             {
-                if (nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker)
+                if (nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker || nearestEnvironment[i].gridCell.isTakenTrader)
                 {
                     nearestEnvironment.RemoveAt(i);
                 }
@@ -227,7 +239,7 @@ namespace CellAgent
             //remove taken cells
             for (int i = nearestEnvironment.Count - 1; i >= 0; i--)
             {
-                if (nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker)
+                if (nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker || nearestEnvironment[i].gridCell.isTakenTrader)
                 {
                     nearestEnvironment.RemoveAt(i);
                 }
@@ -292,7 +304,7 @@ namespace CellAgent
             }
         }
 
-        private bool PerformAttack(ref List<AgentCell> targetList, ref List<List<ResourceCell>> grid, int width, int height)
+        private bool PerformAttack(ref List<AgentCell> basicList, ref List<AgentCell> tradersList, ref List<List<ResourceCell>> grid, int width, int height)
         {
             bool attackSucceeded = false;
 
@@ -300,9 +312,9 @@ namespace CellAgent
 
             int tmp = nearestEnvironment.Count;
             //remove cells that aren't targets
-            for (int i = nearestEnvironment.Count-1; i >= 0; i--)
+            for (int i = nearestEnvironment.Count - 1; i >= 0; i--)
             {
-                if (!nearestEnvironment[i].gridCell.isTakenBasic || nearestEnvironment[i].gridCell.isTakenAttacker)
+                if(nearestEnvironment[i].gridCell.isTakenAttacker || (!nearestEnvironment[i].gridCell.isTakenBasic && !nearestEnvironment[i].gridCell.isTakenAttacker && !nearestEnvironment[i].gridCell.isTakenTrader))
                 {
                     nearestEnvironment.RemoveAt(i);
                 }
@@ -315,42 +327,55 @@ namespace CellAgent
                 int target = rnd.Next(nearestEnvironment.Count);
                 string targetCoordintates = "" + nearestEnvironment[target]._x + " " + nearestEnvironment[target]._y;
 
-                int targetIndex = targetList.FindIndex(a => a.coordinates == targetCoordintates);
+                List<AgentCell> victimList;
+
+                if (nearestEnvironment[target].gridCell.isTakenBasic)
+                {
+                    victimList = basicList;
+                } else if (nearestEnvironment[target].gridCell.isTakenTrader)
+                {
+                    victimList = tradersList;
+                } else
+                {
+                    victimList = basicList;
+                }                
+
+                int targetIndex = victimList.FindIndex(a => a.coordinates == targetCoordintates);
 
                 if(targetIndex == -1) //other attacker was first
                 {
                     attackSucceeded = false;
                 } else
                 {
-                    if (attack > targetList[targetIndex].HP)
+                    if (attack > victimList[targetIndex].HP)
                     {
-                        targetList[targetIndex].HP -= attack;
+                        victimList[targetIndex].HP -= attack;
 
-                        if (capacity > (sugarBackpack + targetList[targetIndex].sugarBackpack))
+                        if (capacity > (sugarBackpack + victimList[targetIndex].sugarBackpack))
                         {
-                            sugarBackpack += targetList[targetIndex].sugarBackpack;
+                            sugarBackpack += victimList[targetIndex].sugarBackpack;
                         }
                         else
                         {
                             sugarBackpack = capacity;
                         }
 
-                        if (capacity > (spiceBackpack + targetList[targetIndex].spiceBackpack))
+                        if (capacity > (spiceBackpack + victimList[targetIndex].spiceBackpack))
                         {
-                            spiceBackpack += targetList[targetIndex].spiceBackpack;
+                            spiceBackpack += victimList[targetIndex].spiceBackpack;
                         }
                         else
                         {
                             spiceBackpack = capacity;
                         }
 
-                        MoveAgentOnGrid(ref grid, targetList[targetIndex].x, targetList[targetIndex].y);
+                        MoveAgentOnGrid(ref grid, victimList[targetIndex].x, victimList[targetIndex].y);
                         attackSucceeded = true;
                     }
                     else
                     {
-                        HP -= targetList[targetIndex].attack;
-                        targetList[targetIndex].HP -= attack;
+                        HP -= victimList[targetIndex].attack;
+                        victimList[targetIndex].HP -= attack;
 
                         attackSucceeded = false;
                     }
@@ -358,6 +383,99 @@ namespace CellAgent
             }           
 
             return attackSucceeded;
+        }
+
+        private bool PerformTrade(ref List<AgentCell> basicList, ref List<List<ResourceCell>> grid, int width, int height)
+        {
+            bool tradeSuccedeed = false;
+
+            List<NeighbouringCellData> nearestEnvironment = getDataAboutEnvironment(ref grid, width, height);
+
+            int tmp = nearestEnvironment.Count;
+            //remove cells that aren't targets
+            for (int i = nearestEnvironment.Count - 1; i >= 0; i--)
+            {
+                if (!nearestEnvironment[i].gridCell.isTakenBasic)
+                {
+                    nearestEnvironment.RemoveAt(i);
+                }
+            }
+
+            //randomly select target, if there's at least one
+            if (nearestEnvironment.Count > 0)
+            {
+                System.Random rnd = new System.Random();
+                int target = rnd.Next(nearestEnvironment.Count);
+                string targetCoordintates = "" + nearestEnvironment[target]._x + " " + nearestEnvironment[target]._y;
+                
+                int targetIndex = basicList.FindIndex(a => a.coordinates == targetCoordintates);
+
+                if (targetIndex == -1) //other attacker was first
+                {
+                    tradeSuccedeed = false;
+                }
+                else
+                {
+                    if(spiceBackpack < sugarBackpack) //trader wants to buy spice
+                    {
+                        if(basicList[targetIndex].sugarBackpack < basicList[targetIndex].spiceBackpack) //good exchange rate
+                        {
+                            if(sugarBackpack >= 1 && basicList[targetIndex].spiceBackpack >= 3)
+                            {
+                                spiceBackpack += 3; sugarBackpack -= 1;
+                                basicList[targetIndex].spiceBackpack -= 3; basicList[targetIndex].sugarBackpack += 1;
+                                tradeSuccedeed = true;
+                            } else
+                            {
+                                tradeSuccedeed = false;
+                            }                            
+                        } else //bad exchange rate
+                        {
+                            if (sugarBackpack >= 2 && basicList[targetIndex].spiceBackpack >= 1)
+                            {
+                                spiceBackpack += 1; sugarBackpack -= 2;
+                                basicList[targetIndex].spiceBackpack -= 1; basicList[targetIndex].sugarBackpack += 2;
+                                tradeSuccedeed = true;
+                            } else
+                            {
+                                tradeSuccedeed = false;
+                            }
+
+                        }
+                    } else //trader wants to buy sugar
+                    {
+                        if (basicList[targetIndex].sugarBackpack > basicList[targetIndex].spiceBackpack) //good exchange rate
+                        {
+                            if (spiceBackpack >= 1 && basicList[targetIndex].sugarBackpack >= 3)
+                            {
+                                sugarBackpack += 3; spiceBackpack -= 1;
+                                basicList[targetIndex].sugarBackpack -= 3; basicList[targetIndex].spiceBackpack += 1;
+                                tradeSuccedeed = true;
+                            }
+                            else
+                            {
+                                tradeSuccedeed = false;
+                            }
+                        }
+                        else //bad exchange rate
+                        {
+                            if (spiceBackpack >= 2 && basicList[targetIndex].sugarBackpack >= 1)
+                            {
+                                sugarBackpack += 1; spiceBackpack -= 2;
+                                basicList[targetIndex].sugarBackpack -= 1; basicList[targetIndex].spiceBackpack += 2;
+                                tradeSuccedeed = true;
+                            }
+                            else
+                            {
+                                tradeSuccedeed = false;
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            return tradeSuccedeed;
         }
 
         //eating gathered resources
@@ -483,7 +601,7 @@ namespace CellAgent
             }
         }
 
-        public void UpdateAgent(ref List<AgentCell> basicAgentList, ref List<List<ResourceCell>> grid, int width, int height)
+        public void UpdateAgent(ref List<AgentCell> basicAgentList, ref List<AgentCell> tradersAgentList, ref List<List<ResourceCell>> grid, int width, int height)
         {
             //checking for agent's pulse
             if (lifeSugar < 0 || HP < 0)
@@ -501,10 +619,16 @@ namespace CellAgent
                         MoveAgentToResources(ref grid, width, height);
                         break;
                     case Tribe.attacker:
-                        if(!PerformAttack(ref basicAgentList, ref grid, width, height))
+                        if(!PerformAttack(ref basicAgentList, ref tradersAgentList, ref grid, width, height))
                         {
                             MoveAgentToResources(ref grid, width, height);
                         }                        
+                        break;
+                    case Tribe.trader:
+                        if (!PerformTrade(ref basicAgentList, ref grid, width, height))
+                        {
+                            MoveAgentToResources(ref grid, width, height);
+                        }
                         break;
                     default:                        
                         break;
