@@ -55,8 +55,14 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-    public void QuiteApplication()
-    {
-        Application.Quit();
+    public void QuitApplication()
+    {        
+        Application.Quit(); //for some reason this generates crash on quit
+
+        /*this is a hack that works well
+        if (!Application.isEditor)
+        {
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+        }*/
     }
 }

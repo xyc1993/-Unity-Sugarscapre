@@ -15,7 +15,7 @@ namespace CellAgent
             trader
         };
 
-        private int lifeSugar; //current state of sugar, if 0 then agent dies, for simplicity life does not regenerate; sorry ants, plan your life better!
+        private int lifeSugar; //current state of sugar hunger, if 0 then agent dies, for simplicity life does not regenerate; sorry ants, plan your life better!
         private int lifeSpice; //you need both resources (all nutrients) to live!
         private int capacity; //how much resources in a backpack an agent can have in total
         private int sugarBackpack; //how much sugar an agent have at current timestep
@@ -30,11 +30,7 @@ namespace CellAgent
 
         private Tribe agentTribe;
         private int attack;
-        private int HP; //health points
-
-        /*TO DO    
-        private uint tradeRate;
-        */
+        private int HP; //health points, used for fights
 
         public AgentCell(int _life, int _capacity, int _grab, int _metabolism, int _range, GameObject _cellObject, Tribe _agentTribe)
         {
@@ -124,14 +120,12 @@ namespace CellAgent
 
         public void MoveAgentOnGrid(ref List<List<ResourceCell>> grid, int _x, int _y)
         {
-            //grid[x][y].isTaken = false;
             FreeCell(ref grid, x, y);
 
             x = _x;
             y = _y;
             coordinates = "" + x + " " + y;
-
-            //grid[x][y].isTaken = true;
+            
             OccupyCell(ref grid, x, y);
             cellObject.transform.position = grid[x][y].GetCellPosition();
         }

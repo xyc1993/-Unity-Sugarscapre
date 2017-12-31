@@ -69,6 +69,17 @@ namespace GridControl
             }
         }
 
+        private void RegrowGridResources()
+        {
+            for (int i = 0; i < grid.Count; i++)
+            {
+                for (int j = 0; j < grid[i].Count; j++)
+                {
+                    grid[i][j].RegrowResources();
+                }
+            }
+        }
+
         private void InitializeAgents(ref List<AgentCell> agentsTribe, AgentCell.Tribe tribe, float agentDensity)
         {
             int agentsNumber = (int)(agentDensity * (float)width * (float)height);
@@ -91,18 +102,7 @@ namespace GridControl
             }
         }
 
-        private void RegrowGridResources()
-        {
-            for (int i = 0; i < grid.Count; i++)
-            {
-                for (int j = 0; j < grid[i].Count; j++)
-                {
-                    grid[i][j].RegrowResources();
-                }
-            }
-        }
-
-        //basicAgentList is for possible interaction for more advanced tribes
+        //basicAgentList and tradersAgentList is for possible interaction for more advanced tribes (trade and attack)
         private void UpdateAgents(ref List<AgentCell> basicAgentList, ref List<AgentCell> tradersAgentList, ref List<AgentCell> agentsTribe)
         {
             for (int i = 0; i < agentsTribe.Count; i++)
